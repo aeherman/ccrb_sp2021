@@ -49,8 +49,36 @@ fix thi
 
 
 ```r
+a_dict %>% filter(date_r > 2000) %>%
+  group_by(Black = case_when(
+    complainant_ethnicity == "Black" ~ "Black",
+    complainant_ethnicity == "White" ~ "White",
+    TRUE ~ "Other"),
+    date_r) %>%
+  summarize(count = n()) %>%
+  group_by(date_r) %>%
+  mutate(prop = count/sum(count)) %>%
+  #filter(White == "White") %>%
+  ggplot(aes(x = date_r, y = prop, group = Black, color = Black)) +
+  ggthemes::theme_tufte() + geom_point(alpha = 0.5)  + geom_smooth() +
+  scale_color_discrete(name = "Race", labels = c("White", "Black", "Unknown")) +
+  ylab("Proportion of Complaintants") + ggtitle("Proportion of Complaints over Time")
+```
+
+```
+## `summarise()` has grouped output by 'Black'. You can override using the `.groups` argument.
+```
+
+```
+## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
+```
+
+![](Visuals_files/figure-html/prop_black_complaintants-1.png)<!-- -->
+
+
+```r
 base <- a_dict %>% group_by(unique_mos_id) %>% mutate(repeats = n()) %>%
-  mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"), complainant_eth = ifelse(complainant_ethnicity == "White", "White", "Other")) %>%
+  mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"), complainant_eth = ifelse(complainant_ethnicity == "Black", "Black", "Other")) %>%
   ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) +
   ggtitle("Officers by Number of Repeat Complaints") +
   xlab("Number of Complaints per Officer") +
@@ -131,10 +159,26 @@ a_dict %>%
   group_by(board_disposition) %>%
   ggplot(aes(x = year_closed, fill = factor(board_disposition, levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) + geom_bar(position = "fill") + labs(fill = "Board Disposition") +
   scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red"))  +
-  ggtitle("Proportion of Complaints Results Over Time") + xlab("Year Closed") + ylab("Proportion") + ggthemes::theme_tufte()
+  ggtitle("Proportion of Complaint Results Over Time") + xlab("Year Closed") + ylab("Proportion") + ggthemes::theme_tufte()
 ```
 
 ![](Visuals_files/figure-html/complaint_results_time-1.png)<!-- -->
+
+```r
+# note for future (change labels on facet_wrap)
+a_dict %>% mutate(Black = case_when(
+  complainant_ethnicity == "Black" ~ "Black",
+  complainant_ethnicity == "White" ~ "White",
+  TRUE ~ "Other")) %>%
+  filter(date_r > 2000) %>%
+  group_by(board_disposition) %>%
+  ggplot(aes(x = year_closed, fill = factor(board_disposition, levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) + geom_bar(position = "fill") + labs(fill = "Board Disposition") +
+  scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red"))  +
+  ggtitle("Proportion of Complaint Results Over Time") + xlab("Year Closed") + ylab("Proportion") + ggthemes::theme_tufte() + 
+  facet_wrap(. ~ Black)
+```
+
+![](Visuals_files/figure-html/complaint_results_time-2.png)<!-- -->
 
 ## Proportion of Rank Changes by Allegation Outcome
 
