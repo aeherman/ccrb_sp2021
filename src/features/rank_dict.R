@@ -1,14 +1,21 @@
 # Calculate Numeric Values of Officer Ranks
+## libraries
+#rm(list=ls())
+library(tidyverse)
+library(readxl)
 
 ## read in relevant data
-
+a <- read_csv("~/sp21dspp/final_project/src/data/allegations_202007271729.csv")
+rank <- read_xlsx("~/sp21dspp/final_project/references/CCRBDataLayoutTable.xlsx", sheet = 2)
 
 ## confirm that ranks and abbreviations make sense at time of incident...
 a %>% left_join(rank, by = c("rank_abbrev_incident" = "Abbreviation")) %>% group_by(rank_incident) %>%
   summarize(ranks = paste(unique(Rank), collapse = ", "))
-## and now:
+
+## View summaries of ranks associated with shorter title:
 a %>% left_join(rank, by = c("rank_abbrev_now" = "Abbreviation")) %>% group_by(rank_now) %>%
   summarize(ranks = paste(unique(Rank), collapse = ", "))
+
 ## code numbers for ranks
 rank$Rank <- str_to_lower(rank$Rank)
 rank_dict <- rank %>%
