@@ -7,6 +7,16 @@ library(tidyverse)
 ## read in relevant data
 a <- read_csv("~/sp21dspp/final_project/src/data/allegations_202007271729.csv")
 
+# str_to_lower
+cols <- c("rank_incident", "rank_now")
+a[cols] <- sapply(a[cols], str_to_lower)
+
+# do they always get closed at the same time?
+## all complaints are resolved at the same time
+a %>% group_by(complaint_id, date = zoo::as.yearmon(paste(year_closed, month_closed, sep = "-"))) %>%
+  summarize(count = n()) %>% group_by(complaint_id) %>%
+  summarize(count = n()) %>% group_by(count) %>% summarize(test = n())
+
 reshaped <- a %>%
   ## convert received and closed dates to yearmon
   mutate(date_r = zoo::as.yearmon(paste(year_received, month_received, sep = "-")),
@@ -61,8 +71,11 @@ for (i in 1:nrow(reshaped)) {
 # reshape data
 ## select relevant columns
 cols <- c("unique_mos_id", "rank_now_no", "board_disposition", "final",
-          "date_r", "rank_incident_no", "date_c", "rank_closed_no", "rank_date_check")
+          "date_r", "rank_incident_no", "date_c", "rank_closed_no", "rank_date_check",
+          "complaint", "complaint_id", "year_received", "year_closed", "precinct")
+# complaintant ethnicity and most ethnicity?, complaint_id
 a_dict <- reshaped %>% select(cols) %>% arrange(unique_mos_id, date_c) %>%
+  # add measures of rank change
   mutate(rank_change = ifelse(final == 1, rank_now_no - rank_incident_no, diff(rank_incident_no)),
          result = case_when(rank_change < 0 ~ "demoted",
                             rank_change == 0 ~ "unchanged",

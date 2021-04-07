@@ -32,3 +32,5 @@ rank_dict <- rank %>%
   transmute(rank = row_number()) %>% filter(rank == 1) %>%
   # record rank
   ungroup() %>% mutate(rank = row_number())
+
+write.csv(rank_dict, "~/sp21dspp/final_project/references/ranking_dictionary.csv")
