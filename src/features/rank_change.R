@@ -38,12 +38,15 @@ reshaped <- a %>%
   mutate(row = row_number()) %>% filter(row == 1) %>%
   ## add some metadata (order and final?) to each officer's complaint
   group_by(unique_mos_id) %>% arrange(date_r) %>%
-  mutate(complaint = row_number(), final = ifelse(complaint == max(complaint), 1, 0))
+  mutate(complaint = row_number(), final = ifelse(complaint == max(complaint), 1, 0),
+         rank_change = ifelse(final == 1, rank_now_no - rank_incident_no, diff(rank_incident_no)),
+         rank_diff_scale = ifelse(final == 0, rank_incident_no - first(rank_incident_no),
+                                  rank_now_no - rank_incident_no))
 
 # calcualte rank at time of complaint resolution
 ## define empty columns for the for loop
 ### any old values for both to preserve the format for the for loop
-reshaped$rank_closed_no <- 0
+reshaped$rank_closed_change <- 0
 reshaped$rank_date_check <- zoo::as.yearmon("1000-01")
 
 ## for loop that looks for the location in time of the resolution within the
@@ -53,7 +56,7 @@ reshaped$rank_date_check <- zoo::as.yearmon("1000-01")
 for (i in 1:nrow(reshaped)) {
   # don't do anything if the month and year of the complaint and resolution are the same
   if (reshaped$date_c[i] == reshaped$date_r[i]) {
-    reshaped$rank_closed_no[i] <- reshaped$rank_incident_no[i]
+    reshaped$rank_closed_change[i] <- reshaped$rank_incident_no[i]
     reshaped$rank_date_check[i] <- reshaped$date_r[i]
   } else {
     # find the value most recent incident date from before the complaint resolution
@@ -62,7 +65,7 @@ for (i in 1:nrow(reshaped)) {
     index <- last(which(reshaped$date_r == value))
     # define the rank close date as the the rank at the date that the most recent
     # complaint had been lodged
-    reshaped$rank_closed_no[i] <- reshaped$rank_incident_no[index]
+    reshaped$rank_closed_change[i] <- reshaped$rank_change[index]
     # keep the date from that observation to track results visually
     reshaped$rank_date_check[i] <- zoo::as.yearmon(reshaped$date_r[index])
   }
@@ -70,15 +73,13 @@ for (i in 1:nrow(reshaped)) {
 
 # reshape data
 ## select relevant columns
-cols <- c("unique_mos_id", "rank_now_no", "board_disposition", "final",
-          "date_r", "rank_incident_no", "date_c", "rank_closed_no", "rank_date_check",
-          "complaint", "complaint_id", "year_received", "year_closed", "precinct")
-# complaintant ethnicity and most ethnicity?, complaint_id
-a_dict <- reshaped %>% select(cols) %>% arrange(unique_mos_id, date_c) %>%
+#cols <- c("unique_mos_id", "rank_now_no", "board_disposition", "final",
+#          "date_r", "rank_incident_no", "date_c", "rank_closed_no", "rank_date_check",
+#          "complaint", "complaint_id", "year_received", "year_closed", "precinct")
+# complainant ethnicity and most ethnicity?, complaint_id
+#a_dict <- reshaped %>% select(cols) %>% arrange(unique_mos_id, date_c) %>%
   # add measures of rank change
-  mutate(rank_change = ifelse(final == 1, rank_now_no - rank_incident_no, diff(rank_incident_no)),
-         result = case_when(rank_change < 0 ~ "demoted",
-                            rank_change == 0 ~ "unchanged",
-                            rank_change > 0 ~ "promoted"),
-         rank_diff_scale = ifelse(final == 0, rank_incident_no - first(rank_incident_no),
-                                  rank_now_no - rank_incident_no))
+#  mutate()
+a_dict <- reshaped %>% mutate(result = case_when(rank_closed_change < 0 ~ "demoted",
+                                                 rank_closed_change == 0 ~ "unchanged",
+                                                 rank_closed_change > 0 ~ "promoted"),)

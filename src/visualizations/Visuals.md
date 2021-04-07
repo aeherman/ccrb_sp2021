@@ -45,14 +45,15 @@ ny_pop <- read_csv("../data/nyc_2010pop_2020precincts.csv")
 # Repeat Complaints Overview
 
 ## Distribution of Repeat Complaints
+fix thi
 
 
 ```r
-base <- a %>% group_by(unique_mos_id, complaint_id) %>% mutate(repeats = n()) %>%
+base <- a_dict %>% group_by(unique_mos_id) %>% mutate(repeats = n()) %>%
   mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"), complainant_eth = ifelse(complainant_ethnicity == "White", "White", "Other")) %>%
-  ggplot(aes(x = repeats, group = word(board_disposition, 1), fill = word(board_disposition, 1))) +
+  ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) +
   ggtitle("Officers by Number of Repeat Complaints") +
-  xlab("Number of Allegations per Officer") +
+  xlab("Number of Complaints per Officer") +
   ggthemes::theme_tufte() +
   labs(fill = "Board Disposition") +
   scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red"))
@@ -64,14 +65,35 @@ base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number
 
 
 ```r
+a_dict %>% group_by(unique_mos_id) %>% summarize(count = n()) %>% arrange(desc(count))
+```
+
+```
+## # A tibble: 3,996 x 2
+##    unique_mos_id count
+##            <dbl> <int>
+##  1         18731    29
+##  2         19489    27
+##  3         18589    26
+##  4         22775    25
+##  5         25861    24
+##  6         20982    21
+##  7         22881    21
+##  8         23903    20
+##  9          2622    19
+## 10         10039    19
+## # … with 3,986 more rows
+```
+
+```r
 a_dict %>% mutate(decade_received = floor(year_received/10)*10) %>%
   group_by(unique_mos_id) %>% mutate(decade_first = min(decade_received)) %>%
   group_by(decade_first, unique_mos_id) %>% mutate(repeats = n()) %>%
   group_by(decade_first) %>% mutate(median = median(repeats)) %>%
   #filter(decade != 2020) %>%
-  ggplot(aes(x = repeats, fill = word(board_disposition, 1))) + geom_bar() + facet_grid(decade_first ~ .) +
+  ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) + geom_bar() + facet_grid(decade_first ~ .) +
   ggtitle("Total Allegations against Officers by Decade of first Allegation") +
-  theme(panel.grid = element_blank()) + labs(fill = "Board Disposition") + ylab("Number of Officers") + xlab("Number of Allegations per Officer")  +
+  theme(panel.grid = element_blank()) + labs(fill = "Board Disposition") + ylab("Number of Officers") + xlab("Number of Complaints per Officer")  +
   scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red")) +
   geom_vline(aes(xintercept = median))
 ```
@@ -134,11 +156,11 @@ a_dict %>% #filter(incident == nth(incident, 3)) %>% don't know how to fitler fo
   geom_label(aes(label = paste0(factor(round(count/total*100, digits = 2)),"%")), position = position_fill(vjust = 0.5),
             size = 3) +
   annotate("text", x = c("Unsubstantiated"), y = c(1.1), family="serif", size=3, 
-           color="black", label = paste(min(breakdown$count), "allegations")) +
+           color="black", label = paste(min(breakdown$count), "complaints")) +
   annotate("text", x = c("Substantiated"), y = c(1.1), family="serif", size=3, 
-           color="black", label = paste(median(breakdown$count), "allegations")) +
+           color="black", label = paste(median(breakdown$count), "complaints")) +
   annotate("text", x = c("Exonerated"), y = c(1.1), family="serif", size=3, 
-           color="black", label = paste(max(breakdown$count), "allegations"))
+           color="black", label = paste(max(breakdown$count), "complaints"))
 ```
 
 ![](Visuals_files/figure-html/rank_changes_resolution-1.png)<!-- -->
@@ -147,11 +169,12 @@ a_dict %>% #filter(incident == nth(incident, 3)) %>% don't know how to fitler fo
 
 
 ```r
-a_dict %>% group_by(complaint, result) %>% summarize(count = n()) %>%
+a_dict %>%
+  group_by(complaint, result) %>% summarize(count = n()) %>%
   ggplot(aes(x = complaint, y = count, fill = result)) + geom_col(position = "fill") + 
   ggthemes::theme_tufte() + geom_vline(aes(xintercept = 25), color = "white") +
   #geom_vline(aes(xintercept = 40), color = "white") + geom_vline(aes(xintercept = 60), color = "white") +
-  ggtitle("Rank Changes by at an Officer's Nth Complaint") + ylab("Rank Change at Nth Complaint") +
+  ggtitle("Rank Changes at an Officer's Nth Complaint") + ylab("Rank Change at Nth Complaint") +
   xlab("Complaint Number")
 ```
 
@@ -162,7 +185,7 @@ a_dict %>% group_by(result, complaint) %>% summarize(count = n()) %>% group_by(c
   ungroup() %>% mutate(alpha = total/sum(count)) %>% arrange(desc(complaint)) %>%
   ggplot(aes(x = complaint, y = count, fill = result, alpha = alpha)) + geom_col(position = "fill") +
   ggthemes::theme_tufte() + geom_vline(aes(xintercept = 20), color = "white") +
-  ggtitle("Rank Changes by at an Officer's Nth Complaint") +
+  ggtitle("Rank Changes at an Officer's Nth Complaint") +
   xlab("Complaint Number") + ylab("Rank Change at Nth Complaint") +
   labs(fill = "Rank\nChange", alpha = "Proportion\nCases\nOverall")
 ```
@@ -187,7 +210,7 @@ a_dict %>% group_by(unique_mos_id) %>% filter(min(rank_change) < 0, max(complain
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   ggtitle("Change in Officer Rank after each Complaint of Misconduct") +
-  ylab("Relative Rank Change") + xlab("Allegation Number")
+  ylab("Relative Rank Change") + xlab("Complaint Number")
 ```
 
 ![](Visuals_files/figure-html/spark_plot_rank-1.png)<!-- -->
@@ -249,4 +272,5 @@ a_dict %>%
   theme(axis.text.x = element_text(angle = 60, vjust = 0.9, hjust = 1)) +
    geom_label(aes(label = paste0(factor(round(count/total*100, digits = 2)),"%"), size = 2), position = position_fill(vjust = 0.5),
             size = 3)
+a
 ```
