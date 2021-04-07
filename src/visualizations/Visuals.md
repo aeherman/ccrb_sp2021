@@ -222,3 +222,31 @@ a_dict %>% group_by(unique_mos_id) %>% filter(min(rank_change) < 0, max(complain
 ```
 
 ![](Visuals_files/figure-html/unnamed-chunk-1-3.png)<!-- -->![](Visuals_files/figure-html/unnamed-chunk-1-4.png)<!-- -->
+
+
+
+```r
+a_dict %>%
+  group_by(board_disposition = word(board_disposition, 1), complainant_ethnicity = case_when(
+      complainant_ethnicity %in% c("White", "Black") ~ complainant_ethnicity,
+      complainant_ethnicity %in% c("Unknown", "Refused") | is.na(complainant_ethnicity) ~ "Unknown",
+      TRUE ~ "People of Color"
+    )) %>% #summarize(count = n()) %>%
+  ggplot(aes(x = board_disposition, group = result, fill = result)) + geom_bar(position = "fill") + facet_wrap(. ~ complainant_ethnicity) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.9, hjust = 1)) +
+  ggtitle("race of complainant in allegations that result in a demotion")
+
+# race of officer in allegations that result in a demotion
+a_dict %>%
+  group_by(board_disposition = word(board_disposition, 1), result = factor(result, levels = c("demoted", "unchanged", "promoted")), mos_ethnicity = case_when(
+      mos_ethnicity %in% c("White", "Black") ~ mos_ethnicity,
+      mos_ethnicity %in% c("Unknown", "Refused") | is.na(mos_ethnicity) ~ "Unknown",
+      TRUE ~ "People of Color"
+    )) %>% summarize(count = n()) %>% group_by(mos_ethnicity, board_disposition) %>% mutate(total = sum(count)) %>%
+  # plot
+  ggplot(aes(x = board_disposition, y = count,
+             fill = result)) + geom_col(position = "fill") + facet_wrap(. ~ mos_ethnicity) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.9, hjust = 1)) +
+   geom_label(aes(label = paste0(factor(round(count/total*100, digits = 2)),"%"), size = 2), position = position_fill(vjust = 0.5),
+            size = 3)
+```
