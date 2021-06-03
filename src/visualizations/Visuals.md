@@ -11,8 +11,8 @@ output:
 
 
 ```r
-rm(list=ls())
 knitr::opts_chunk$set(echo = TRUE)
+source("final_project_theme.R")
 
 library(tidyverse)
 library(sf)
@@ -79,14 +79,15 @@ a_dict %>% filter(date_r > 2000) %>%
 ```r
 base <- a_dict %>% group_by(unique_mos_id) %>% mutate(repeats = n()) %>%
   mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"), complainant_eth = ifelse(complainant_ethnicity == "Black", "Black", "Other")) %>%
+  
   ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) +
+  
   ggtitle("Officers by Number of Repeat Complaints") +
-  xlab("Number of Complaints per Officer") +
-  ggthemes::theme_tufte() +
+  xlab("\nNumber of Complaints per Officer") +
   labs(fill = "Board Disposition") +
-  scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red"))
+  scale_fill_manual("", values = pal_disposition)
 
-base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers")
+base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers\n")
 ```
 
 ![](Visuals_files/figure-html/repeat_complaints-1.png)<!-- -->
@@ -119,11 +120,15 @@ a_dict %>% mutate(decade_received = floor(year_received/10)*10) %>%
   group_by(decade_first, unique_mos_id) %>% mutate(repeats = n()) %>%
   group_by(decade_first) %>% mutate(median = median(repeats)) %>%
   #filter(decade != 2020) %>%
-  ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) + geom_bar() + facet_grid(decade_first ~ .) +
-  ggtitle("Total Allegations against Officers by Decade of first Allegation") +
-  theme(panel.grid = element_blank()) + labs(fill = "Board Disposition") + ylab("Number of Officers") + xlab("Number of Complaints per Officer")  +
-  scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red")) +
-  geom_vline(aes(xintercept = median))
+  ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1),
+                                        levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) +
+  geom_bar() + facet_grid(decade_first ~ .) + geom_vline(aes(xintercept = median)) +
+  
+  ggtitle("Total Allegations against Officers by Decade of first Allegation\n") +
+  labs(fill = "Board Disposition") + ylab("Number of Officers") + xlab("\nNumber of Complaints per Officer")  +
+  scale_fill_manual("", values = pal_disposition) +
+  
+  facet_theme
 ```
 
 ![](Visuals_files/figure-html/repeat_complaints_decade_entry-1.png)<!-- -->
@@ -135,7 +140,7 @@ a_dict %>% mutate(decade_received = floor(year_received/10)*10) %>%
 # make race labels more visible
 names <- c("Non-White", "White", "Unknown")
 
-base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers") +
+base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers\n") +
   facet_wrap(. ~ complainant_eth, aes(labeller = "label_value")) + ggtitle("Officers by Number of Repeat Allegations\nby Complainant Ethnicity")
 ```
 
@@ -144,7 +149,8 @@ base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number
 ```r
 # thin out axis labels
 base + geom_bar(position = "fill") + ylab(NULL) +
-  facet_wrap(. ~ complainant_eth) + ggtitle("Allegation Outcome by Number of Repeat Allegations per Officer and Complainant Ethnicity")
+  facet_wrap(. ~ complainant_eth) + ggtitle("Allegation Outcome by Number of Repeat Allegations\nper Officer and Complainant Ethnicity") +
+  scale_y_continuous(limits=c(0,1), labels = scales::percent)
 ```
 
 ![](Visuals_files/figure-html/repeat_complaints_eth-2.png)<!-- -->
@@ -158,8 +164,8 @@ base + geom_bar(position = "fill") + ylab(NULL) +
 a_dict %>%
   group_by(board_disposition) %>%
   ggplot(aes(x = year_closed, fill = factor(board_disposition, levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) + geom_bar(position = "fill") + labs(fill = "Board Disposition") +
-  scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red"))  +
-  ggtitle("Proportion of Complaint Results Over Time") + xlab("Year Closed") + ylab("Proportion") + ggthemes::theme_tufte()
+  scale_fill_manual("", values = pal_disposition) + scale_y_continuous(limits=c(0,1), labels = scales::percent) +
+  ggtitle("Proportion of Complaint Results Over Time") + xlab("\nYear Closed") + ylab(NULL)
 ```
 
 ![](Visuals_files/figure-html/complaint_results_time-1.png)<!-- -->
@@ -173,8 +179,8 @@ a_dict %>% mutate(Black = case_when(
   filter(date_r > 2000) %>%
   group_by(board_disposition) %>%
   ggplot(aes(x = year_closed, fill = factor(board_disposition, levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) + geom_bar(position = "fill") + labs(fill = "Board Disposition") +
-  scale_fill_manual("", values = c("#6666FF", "#CCCCFF", "red"))  +
-  ggtitle("Proportion of Complaint Results Over Time") + xlab("Year Closed") + ylab("Proportion") + ggthemes::theme_tufte() + 
+  scale_fill_manual("", values = pal_disposition)  + scale_y_continuous(limits=c(0,1), labels = scales::percent) +
+  ggtitle("Proportion of Complaint Results Over Time") + xlab("\nYear Closed") + ylab(NULL) +
   facet_wrap(. ~ Black)
 ```
 
@@ -184,27 +190,24 @@ a_dict %>% mutate(Black = case_when(
 
 
 ```r
-breakdown <- a_dict %>% group_by(board_disposition) %>% summarize(count = n())
+breakdown <- a_dict %>% group_by(board_disposition) %>% summarize(count = paste(n(), "Complaints"))
 a_dict %>% #filter(incident == nth(incident, 3)) %>% don't know how to fitler for just the first one...
-  group_by(board_disposition, result) %>%
-  summarize(count = n()) %>%
-  group_by(board_disposition) %>% mutate(total = sum(count)) %>% ungroup() %>% mutate(width = round(total/sum(count), digits = 4)) %>%
-  ggplot(aes(x = reorder(board_disposition, -count), y = count,
-             fill = result)) +
+  group_by(board_disposition, result) %>% summarize(count = n()) %>%
+  group_by(board_disposition) %>% mutate(total = sum(count)) %>%
+  ungroup() %>% mutate(width = round(total/sum(count), digits = 4)) %>%
+  
+  ggplot(aes(x = reorder(board_disposition, -count), y = count,  fill = result)) +
   geom_col(aes(width = width*1.2), position = "fill") +
   
-  ggthemes::theme_tufte() +
   ggtitle("Proportion of Rank Changes after Complaint Resolution") + xlab(NULL) + ylab(NULL) +
-  theme(legend.title = element_blank(), legend.position =  "bottom",
-        axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
-  geom_label(aes(label = paste0(factor(round(count/total*100, digits = 2)),"%")), position = position_fill(vjust = 0.5),
-            size = 3) +
-  annotate("text", x = c("Unsubstantiated"), y = c(1.1), family="serif", size=3, 
-           color="black", label = paste(min(breakdown$count), "complaints")) +
-  annotate("text", x = c("Substantiated"), y = c(1.1), family="serif", size=3, 
-           color="black", label = paste(median(breakdown$count), "complaints")) +
-  annotate("text", x = c("Exonerated"), y = c(1.1), family="serif", size=3, 
-           color="black", label = paste(max(breakdown$count), "complaints"))
+  scale_fill_discrete(NULL) +
+  geom_label(aes(label = paste0(factor(round(count/total*100, digits = 2)),"%")),
+             position = position_fill(vjust = 0.5), size = 3, show.legend = FALSE) +
+  annotate("text", x = c(breakdown$board_disposition), y = rep(1.1, 3),
+           family = "serif", size = 3, color = "black",
+           label = breakdown$count) +
+  
+  theme(axis.text.y = element_blank())
 ```
 
 ![](Visuals_files/figure-html/rank_changes_resolution-1.png)<!-- -->
@@ -216,22 +219,31 @@ a_dict %>% #filter(incident == nth(incident, 3)) %>% don't know how to fitler fo
 a_dict %>%
   group_by(complaint, result) %>% summarize(count = n()) %>%
   ggplot(aes(x = complaint, y = count, fill = result)) + geom_col(position = "fill") + 
-  ggthemes::theme_tufte() + geom_vline(aes(xintercept = 25), color = "white") +
-  #geom_vline(aes(xintercept = 40), color = "white") + geom_vline(aes(xintercept = 60), color = "white") +
-  ggtitle("Rank Changes at an Officer's Nth Complaint") + ylab("Rank Change at Nth Complaint") +
-  xlab("Complaint Number")
+  #geom_vline(aes(xintercept = 25), color = "white") +
+  
+  scale_y_continuous(labels = scales::percent) +
+  
+  ggtitle("Rank Changes at an Officer's Nth Complaint\n") +
+  ylab("Rank Change at Nth Complaint\n") + xlab("\nComplaint Number") +
+  labs(fill = "")
 ```
 
 ![](Visuals_files/figure-html/rank_changes-1.png)<!-- -->
 
 ```r
-a_dict %>% group_by(result, complaint) %>% summarize(count = n()) %>% group_by(complaint) %>% mutate(total = sum(count)) %>%
+a_dict %>%
+  group_by(result, complaint) %>% summarize(count = n()) %>% group_by(complaint) %>% mutate(total = sum(count)) %>%
   ungroup() %>% mutate(alpha = total/sum(count)) %>% arrange(desc(complaint)) %>%
+  
   ggplot(aes(x = complaint, y = count, fill = result, alpha = alpha)) + geom_col(position = "fill") +
-  ggthemes::theme_tufte() + geom_vline(aes(xintercept = 20), color = "white") +
+  geom_vline(aes(xintercept = 20), color = "white") +
+  
   ggtitle("Rank Changes at an Officer's Nth Complaint") +
-  xlab("Complaint Number") + ylab("Rank Change at Nth Complaint") +
-  labs(fill = "Rank\nChange", alpha = "Proportion\nCases\nOverall")
+  xlab("\nComplaint Number") + ylab("Rank Change at Nth Complaint\n") +
+  labs(fill = "Rank\nChange", alpha = "Proportion\nCases\nOverall") +
+  scale_y_continuous(labels = scales::percent) +
+  
+  theme(legend.position = "right")
 ```
 
 ![](Visuals_files/figure-html/rank_changes-2.png)<!-- -->
@@ -243,17 +255,12 @@ a_dict %>% group_by(unique_mos_id) %>% filter(min(rank_change) < 0, max(complain
   #mutate(cat = x >= 0) %>%
   ggplot(aes(x = complaint, y = rank_diff_scale)) +
   geom_area(alpha = 0.3) + 
-  #geom_col(aes(fill = col)) +
   geom_hline(aes(yintercept = 0), color = "red", alpha = 0.5, lty = "dotted") +
   geom_line() +
   facet_grid(reorder(unique_mos_id, complaint) ~ ., scales = "free_y", switch = "y") +
-  #ggthemes::theme_tufte() +
-  theme(axis.title.x=element_blank(), axis.text.y = element_blank(),
-        strip.text.y.left = element_text(angle = 0),
-        axis.ticks = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  ggtitle("Change in Officer Rank after each Complaint of Misconduct") +
+  
+  facet_theme +
+  ggtitle("Change in Officer Rank after each Complaint of Misconduct\n") +
   ylab("Relative Rank Change") + xlab("Complaint Number")
 ```
 
@@ -261,6 +268,17 @@ a_dict %>% group_by(unique_mos_id) %>% filter(min(rank_change) < 0, max(complain
 
 # Geographic Visuals
 
+
+```r
+# only look at the past five years to account for careers ending
+# don't have a variable for when the incident occurred?
+#sub <- a["year_received" > 2015, ]
+#sub$month_received <- ifelse(length(sub$month_received == 1), paste0("0", sub$month_received), sub$month_received)
+#sub$date <- as.yearmon(paste(sub$year_received, sub$month_received, sep = "-"))
+
+# perhaps later look at the frequency of complaints?
+summarize(group_by(filter(a, year_received > 2015), precinct), count = n()) %>% mutate(total = sum(count))
+```
 
 ```
 ## # A tibble: 79 x 3
@@ -279,7 +297,41 @@ a_dict %>% group_by(unique_mos_id) %>% filter(min(rank_change) < 0, max(complain
 ## # … with 69 more rows
 ```
 
-![](Visuals_files/figure-html/unnamed-chunk-1-1.png)<!-- -->![](Visuals_files/figure-html/unnamed-chunk-1-2.png)<!-- -->
+```r
+left_join(nypp, summarize(group_by(filter(a, year_received > 2010), precinct), count = n()),
+          by = c("Precinct" = "precinct")) %>%
+  left_join(ny_pop[c("precinct_2020", "P0010001")], by = c("Precinct" = "precinct_2020")) %>%
+  ggplot() + geom_sf(aes(fill = count), color = "white") +
+  #ggthemes::theme_tufte() +
+  scale_fill_continuous(type = "viridis", direction = -1) +
+  ggtitle("Frequency of Allegations by Precinct (year > 2015)") +
+  geom_sf_text(aes(label = ifelse(count > 400, Precinct, "")), size = 3, color = "white") +
+  theme(axis.title = element_blank())
+```
+
+![](Visuals_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
+
+```r
+# is there are higher substantiation or demotion rate per allegation in precinct 75?
+a %>% group_by(precinct = precinct == 75, board_disposition = word(board_disposition, 1)) %>% summarize(count = n()) %>% na.omit() %>% group_by(precinct) %>% mutate(prop = round(count/sum(count), digits = 4)*100) %>%
+  ggplot(aes(x = precinct, y = count, fill = board_disposition)) + geom_col(position = "fill") +
+  #ggthemes::theme_tufte() +
+  theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+  ggtitle("Board Disposition by Precinct") + labs(fill = NULL) + xlab(NULL) +
+  scale_x_discrete(limits=c("TRUE", "FALSE"), labels = c("Precinct 75", "Other Precincts")) +
+  geom_text(aes(label = paste0(prop, "%")), position = position_fill(vjust = 0.5)) + ylab(NULL)
+```
+
+![](Visuals_files/figure-html/unnamed-chunk-1-2.png)<!-- -->
+
+```r
+# Median response time
+a %>% filter(year_received > 2015) %>%
+  mutate(date_r = zoo::as.yearmon(paste(year_received, month_received, sep = "-")),
+         date_c = zoo::as.yearmon(paste(year_closed, month_closed, sep = "-")),
+         # looks like a proportion of a year (ie .5 = 6 months)
+         duration = (date_c - date_r)) %>% summarize(median = median(duration))
+```
 
 ```
 ## # A tibble: 1 x 1
@@ -288,7 +340,40 @@ a_dict %>% group_by(unique_mos_id) %>% filter(min(rank_change) < 0, max(complain
 ## 1  0.583
 ```
 
-![](Visuals_files/figure-html/unnamed-chunk-1-3.png)<!-- -->![](Visuals_files/figure-html/unnamed-chunk-1-4.png)<!-- -->
+```r
+a_reshape <- a %>% filter(year_received > 2015) %>%
+  mutate(date_r = zoo::as.yearmon(paste(year_received, month_received, sep = "-")),
+         date_c = zoo::as.yearmon(paste(year_closed, month_closed, sep = "-")),
+         # looks like a proportion of a year (ie .5 = 6 months)
+         duration = (date_c - date_r)) %>% group_by(precinct) %>% summarize(mean = median(duration)*100)
+
+nypp %>% left_join(a_reshape, by = c("Precinct" = "precinct")) %>%
+  ggplot() + geom_sf(aes(fill = mean), color = "white") +
+  
+  theme(axis.title = element_blank()) +
+  scale_fill_continuous(type = "viridis", direction = -1) +
+  ggtitle("Median Response time to Allegations (Year > 2015)") +
+  labs(fill = "Median Response\nTime (% of a yr)") +
+  geom_sf_text(aes(label = ifelse(mean >= 85, Precinct, "")), size = 3, color = "white")
+```
+
+![](Visuals_files/figure-html/unnamed-chunk-1-3.png)<!-- -->
+
+```r
+a %>% group_by(precinct = precinct == 100, board_disposition = word(board_disposition, 1)) %>% summarize(count = n()) %>% na.omit() %>% group_by(precinct) %>% mutate(prop = round(count/sum(count), digits = 4)*100) %>%
+  ggplot(aes(x = precinct, y = count, fill = board_disposition)) + geom_col(position = "fill") +
+  #ggthemes::theme_tufte() +
+  theme(axis.ticks.y = element_blank(), axis.text.y = element_blank()) +
+  ggtitle("Board Disposition by Precinct") + labs(fill = NULL) + xlab(NULL) + ylab(NULL) +
+  scale_x_discrete(limits=c("TRUE", "FALSE"), labels = c("Precinct 100", "Other Precincts")) +
+  geom_text(aes(label = paste0(prop, "%")), position = position_fill(vjust = 0.5), family = "serif")
+```
+
+![](Visuals_files/figure-html/unnamed-chunk-1-4.png)<!-- -->
+
+```r
+  #theme(axis.ticks.x = element_text(labels = c("100", "Other")))
+```
 
 
 
