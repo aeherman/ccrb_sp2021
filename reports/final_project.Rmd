@@ -11,9 +11,11 @@ output:
 
 ## Repeat Offenses
 
-First, let's take a look at the distribution of repeat allegations. In order to be included in the dataset, officers must have at least one substantiated allegation against them. In the below histogram, we can see that, indeed, for officers with only one allegation, it was substantiated.  This data inclusion condition skews the proportion of officers with fewer allegations toward substantiated.
+First, let's take a look at the distribution of repeat allegations.
 
-We can also see that 50% of officers in this dataset have about 13 or fewer allegations. Also, some officers, have as many as 70 allegations against them.
+In the left plot, we can see the total of number of officers with a given number of repeat allegations.  This plot demonstrates a declining pattern and indicates that 50% of officers in the database have fewer than 3 allegations against them.  Some officers have nearly 30 allegations against them.
+
+In order to be included in the dataset, officers must have at least one substantiated allegation against them. In the plot on the right, which demonstrates the total number of allegations for all officers with a given number of repeat allegations, we can see that, indeed, for officers with only one allegation, it was substantiated.  This data inclusion condition skews the proportion of officers with fewer allegations toward substantiated.
 
 ```{r echo=F}
 knitr::include_graphics("../src/visualizations/Visuals_files/figure-html/repeat_complaints-1.png")
@@ -25,14 +27,18 @@ But this dataset goes back until the 1980s and contains data only on current off
 knitr::include_graphics("../src/visualizations/Visuals_files/figure-html/repeat_complaints_decade_entry-1.png")
 ```
 
-The number of repeat allegations against officers varies by the race of the complainant.  The below plot groups repeat allegations by the identified race of the complainant (meaning that an officer with 1 substantiated allegation from a white complainant and 1 unsubstantiated allegations from a P.O.C. complainant would represent an officer with 1 allegation in each facet).  This grouping demonstrates that the majority of complaints
+## Repeat Offenses by Racial Demographics
+
+The allegations against officers with a given number of repeat allegations vary by the race of the complainant and the race of the officer.  The below plot indicates that the majority of complainants are people of color, and a higher proportion of allegations of white complainants are substantiated.
+
+```{r echo=F}
+knitr::include_graphics("../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-2.png")
+```
+
+The below plot groups repeat allegations by the identified race of the complainant and the officer. This grouping demonstrates that the distribution of complaints is similar across racial demographics, and that the majority of allegations are Black complainants against White officers.
 
 ```{r echo=F}
 knitr::include_graphics("../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-1.png")
-```
-
-```{r echo=F}
-knitr::include_graphics("../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-3.png")
 ```
 
 ## Rank Changes: associating the conclusion of the civilian complaint review board with changes in rank of officer.

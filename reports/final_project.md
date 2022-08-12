@@ -11,7 +11,11 @@ output:
 
 ## Repeat Offenses
 
-First, let's take a look at the distribution of repeat allegations. In the below histogram, we can see that 50% of officers in this dataset have about 13 or fewer allegations (but that's a lot!). Also, some officers, have as many as 70 allegations against them!
+First, let's take a look at the distribution of repeat allegations.
+
+In the left plot, we can see the total of number of officers with a given number of repeat allegations.  This plot demonstrates a declining pattern and indicates that 50% of officers in the database have fewer than 3 allegations against them.  Some officers have nearly 30 allegations against them.
+
+In order to be included in the dataset, officers must have at least one substantiated allegation against them. In the plot on the right, which demonstrates the total number of allegations for all officers with a given number of repeat allegations, we can see that, indeed, for officers with only one allegation, it was substantiated.  This data inclusion condition skews the proportion of officers with fewer allegations toward substantiated.
 
 <img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints-1.png" width="672" />
 
@@ -19,11 +23,15 @@ But this dataset goes back until the 1980s and contains data only on current off
 
 <img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_decade_entry-1.png" width="672" />
 
-In order to be included in the dataset, officers must have at least one substantiated allegation against them. We can see in the below plots that, indeed, for officers with only one allegation, it was substantiated. I would expect that as officers continue to receive allegations, there would be an increasing rate of substantiation, however, it appears to peter off. These patterns do not appear to vary by the race of the complainant (coded as white or other), although it does appear that nonwhite complainants compose a majority in this dataset.
+## Repeat Offenses by Racial Demographics
 
-<img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-1.png" width="672" /><img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-2.png" width="672" />
+The allegations against officers with a given number of repeat allegations vary by the race of the complainant and the race of the officer.  The below plot indicates that the majority of complainants are people of color, and a higher proportion of allegations of white complainants are substantiated.
 
-Skews proportion toward substantiated for officers with fewer allegations.
+<img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-2.png" width="672" />
+
+The below plot groups repeat allegations by the identified race of the complainant and the officer. This grouping demonstrates that the distribution of complaints is similar across racial demographics, and that the majority of allegations are Black complainants against White officers.
+
+<img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-1.png" width="672" />
 
 ## Rank Changes: associating the conclusion of the civilian complaint review board with changes in rank of officer.
 
@@ -45,16 +53,16 @@ Next, we might be able to see consequences for behavioral misconduct in terms of
 In order to do this, I rated the ranks numerically as visible in the below table.  Also, I isolate results of complaints based on the following hierarchy: substanitated, exonerated, unsubstantiated.
 
 
-| X1|rank_cat               | rank|
-|--:|:----------------------|----:|
-|  1|police officer         |    1|
-|  2|sergeant               |    2|
-|  3|detective              |    3|
-|  4|lieutenant             |    4|
-|  5|captain                |    5|
-|  6|deputy inspector       |    6|
-|  7|inspector              |    7|
-|  8|chiefs and other ranks |    8|
+| ...1|rank_cat               | rank|
+|----:|:----------------------|----:|
+|    1|police officer         |    1|
+|    2|sergeant               |    2|
+|    3|detective              |    3|
+|    4|lieutenant             |    4|
+|    5|captain                |    5|
+|    6|deputy inspector       |    6|
+|    7|inspector              |    7|
+|    8|chiefs and other ranks |    8|
 
 <img src="../src/visualizations/Visuals_files/figure-html/rank_changes_resolution-1.png" width="672" />
 
