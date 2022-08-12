@@ -52,7 +52,11 @@ a_dict %>% filter(date_r > 2000) %>%
 
 ```{r repeat_complaints, message=F, warning=F}
 base <- a_dict %>% group_by(unique_mos_id) %>% mutate(repeats = n()) %>%
-  mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"), complainant_eth = ifelse(complainant_ethnicity == "Black", "Black", "Other")) %>%
+  mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"),
+         complainant_eth = str_replace(complainant_ethnicity,
+                                       ".*Indian.*|Asian|Unknown|Refused", "Other Race"),
+         complainant_eth = ifelse(is.na(complainant_eth), "Other Race", complainant_eth)) %>%
+  group_by(complainant_eth) %>% mutate(com_eth_med = median(repeats)) %>% ungroup() %>%
   
   ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) +
   
@@ -86,16 +90,60 @@ a_dict %>% mutate(decade_received = floor(year_received/10)*10) %>%
 ## Disribution of Repeat Complaints by Ethnicity
 
 ```{r repeat_complaints_eth, message=F, warning=F}
+
+a_dict %>% ungroup %>% count(complainant_ethnicity)
 # make race labels more visible
 names <- c("Non-White", "White", "Unknown")
 
-base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers\n") +
-  facet_wrap(. ~ complainant_eth, aes(labeller = "label_value")) + ggtitle("Officers by Number of Repeat Allegations\nby Complainant Ethnicity")
+
+a_dict %>%
+  mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"),
+         complainant_eth = str_replace_all(complainant_ethnicity,
+                                       c(".*Indian.*|Asian|Unknown|Refused" = "Other Race",
+                                         "Black|Hispanic" = "P.O.C.")),
+         complainant_eth = ifelse(is.na(complainant_eth), "Other Race", complainant_eth),
+         fill = factor(word(board_disposition, 1),
+                           levels = c("Exonerated", "Unsubstantiated", "Substantiated"))) %>%
+  count(unique_mos_id, complainant_eth, fill) %>%
+  group_by(complainant_eth) %>% mutate(com_eth_med = median(n)) %>% ungroup() %>%
+  
+  ggplot(aes(x = n, fill = fill)) +
+  geom_bar() + #geom_vline(aes(xintercept = com_eth_med)) +
+  
+  facet_grid(complainant_eth ~ ., scale = "free") +
+  
+  ggtitle("Officers by Number of Repeat Allegations\nand Complainant Ethnicity") +
+  xlab("\nNumber of Complaints per Officer") + ylab("Number of Officers\n") +
+  labs(fill = "Board Disposition") +
+  scale_fill_manual("", values = pal_disposition) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_rect(fill = "grey90", color = "white"))
 
 # thin out axis labels
 base + geom_bar(position = "fill") + ylab(NULL) +
   facet_wrap(. ~ complainant_eth) + ggtitle("Allegation Outcome by Number of Repeat Allegations\nper Officer and Complainant Ethnicity") +
   scale_y_continuous(limits=c(0,1), labels = scales::percent)
+
+# complainant ethnicity
+a_dict %>% ungroup() %>%
+  mutate(fill = factor(word(board_disposition, 1),
+                       levels = c("Exonerated", "Unsubstantiated", "Substantiated"))) %>%
+  count(mos_ethnicity, fill) %>%
+  group_by(mos_ethnicity) %>% mutate(total = sum(n)) %>%
+  ungroup() %>% mutate(width = total/sum(total)) %>%
+  filter(!str_detect(mos_ethnicity, "Indian")) %>%
+  ggplot(aes(x = mos_ethnicity, y = n, fill = fill, width = width*5)) + geom_col(position = "fill") +
+  geom_label(aes(label = paste0(factor(round(n/total*100, digits = 2)),"%")),
+             position = position_fill(vjust = 0.5), size = 3, show.legend = FALSE) +
+  geom_text(aes(x = mos_ethnicity, y = 1.05, label = glue::glue("{total} Complaints")),
+            family = "serif", size = 3) +
+  
+  ggtitle("Allegation Outcomes by Complainant Ethnicity\n") +
+  xlab(NULL) + ylab(NULL) +
+  labs(fill = "Board Disposition") +
+  scale_fill_manual("", values = pal_disposition) +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.y = element_blank())
 
 ```
 
