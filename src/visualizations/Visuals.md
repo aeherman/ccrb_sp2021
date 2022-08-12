@@ -4,7 +4,7 @@ author: "Arielle Herman"
 date: "4/6/2021"
 output:
   html_document:
-    keep_md: True
+    keep_md: yes
 ---
 
 # Prep
@@ -27,7 +27,9 @@ nypp <- st_read("../data/police_precincts", layer = "nypp")
 ```
 
 ```
-## Reading layer `nypp' from data source `/home/arielle/sp21dspp/final_project/src/data/police_precincts' using driver `ESRI Shapefile'
+## Reading layer `nypp' from data source 
+##   `/home/arielle/sp21dspp/final_project/src/data/police_precincts' 
+##   using driver `ESRI Shapefile'
 ## Simple feature collection with 77 features and 3 fields
 ## Geometry type: MULTIPOLYGON
 ## Dimension:     XY
@@ -66,10 +68,8 @@ a_dict %>% filter(date_r > 2000) %>%
 ```
 
 ```
-## `summarise()` has grouped output by 'Black'. You can override using the `.groups` argument.
-```
-
-```
+## `summarise()` has grouped output by 'Black'. You can override using the
+## `.groups` argument.
 ## `geom_smooth()` using method = 'loess' and formula 'y ~ x'
 ```
 
@@ -77,17 +77,38 @@ a_dict %>% filter(date_r > 2000) %>%
 
 
 ```r
-base <- a_dict %>% group_by(unique_mos_id) %>% mutate(repeats = n()) %>%
-  mutate(mos_eth = ifelse(mos_ethnicity == "White", "White", "Other"), complainant_eth = ifelse(complainant_ethnicity == "Black", "Black", "Other")) %>%
+off <- a_dict %>% count(unique_mos_id) %>% ggplot(aes(x = n)) + geom_bar() + geom_vline(aes(xintercept = median(n))) +
+  #ggtitle("Officers by Number of Repeat Allegations") +
+  xlab("\nAllegations per Officer") + ylab(NULL) + scale_y_continuous(limits = c(0,2000))
+
+base_data <- a_dict %>% group_by(unique_mos_id) %>% mutate(repeats = n()) %>%
+  mutate(complainant_eth = str_replace(complainant_ethnicity,
+                                       ".*Indian.*|Asian|Unknown|Refused", "Other Race"),
+         complainant_eth = ifelse(is.na(complainant_eth), "Other Race", complainant_eth),
+         mos_eth = str_replace(mos_ethnicity,
+                                       ".*Indian.*|Asian|Unknown|Refused", "Other Race"),
+         mos_eth = ifelse(is.na(mos_ethnicity), "Other Race", mos_eth),
+         
+         fill = factor(word(board_disposition, 1),
+                       levels = c("Exonerated", "Unsubstantiated", "Substantiated"))) %>%
+  group_by(complainant_eth) %>% mutate(com_eth_med = median(repeats)) %>% ungroup()
+
+base <- base_data %>%
+  #filter(unique_mos_id %in% c(2, 21, 32, 20674)) %>%
+  ggplot(aes(x = repeats, fill = fill)) +
   
-  ggplot(aes(x = repeats, fill = factor(word(board_disposition, 1), levels = c("Exonerated", "Unsubstantiated", "Substantiated")))) +
-  
-  ggtitle("Officers by Number of Repeat Complaints") +
-  xlab("\nNumber of Complaints per Officer") +
+  #ggtitle("Total Allegations by\nNumber of Officers' Repeat Allegations") +
+  xlab("\nAllegations per Officer") +
   labs(fill = "Board Disposition") +
   scale_fill_manual("", values = pal_disposition)
 
-base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers\n")
+all <- base + geom_bar() + ylab(NULL) + scale_y_continuous(limits = c(0,2000)) +
+  theme(legend.position = "right")
+
+two <- ggpubr::ggarrange(off, all, ncol = 2, nrow = 1, labels = c("Total Officers", "Total Allegations"),
+                  common.legend = TRUE, legend = "right", hjust = -1)
+
+two
 ```
 
 ![](Visuals_files/figure-html/repeat_complaints-1.png)<!-- -->
@@ -98,7 +119,7 @@ a_dict %>% group_by(unique_mos_id) %>% summarize(count = n()) %>% arrange(desc(c
 ```
 
 ```
-## # A tibble: 3,996 x 2
+## # A tibble: 3,996 × 2
 ##    unique_mos_id count
 ##            <dbl> <int>
 ##  1         18731    29
@@ -125,7 +146,7 @@ a_dict %>% mutate(decade_received = floor(year_received/10)*10) %>%
   geom_bar() + facet_grid(decade_first ~ .) + geom_vline(aes(xintercept = median)) +
   
   ggtitle("Total Allegations against Officers by Decade of first Allegation\n") +
-  labs(fill = "Board Disposition") + ylab("Number of Officers") + xlab("\nNumber of Complaints per Officer")  +
+  labs(fill = "Board Disposition") + ylab("Total Allegations") + xlab("\nNumber of Complaints per Officer")  +
   scale_fill_manual("", values = pal_disposition) +
   
   facet_theme
@@ -137,20 +158,71 @@ a_dict %>% mutate(decade_received = floor(year_received/10)*10) %>%
 
 
 ```r
+a_dict %>% ungroup %>% count(complainant_ethnicity)
+```
+
+```
+## # A tibble: 9 × 2
+##   complainant_ethnicity     n
+##   <chr>                 <int>
+## 1 American Indian          27
+## 2 Asian                   245
+## 3 Black                  7713
+## 4 Hispanic               2809
+## 5 Other Race              277
+## 6 Refused                 120
+## 7 Unknown                 443
+## 8 White                  1302
+## 9 <NA>                   2419
+```
+
+```r
 # make race labels more visible
 names <- c("Non-White", "White", "Unknown")
 
-base + geom_bar() + geom_vline(aes(xintercept = median(repeats))) + ylab("Number of Officers\n") +
-  facet_wrap(. ~ complainant_eth, aes(labeller = "label_value")) + ggtitle("Officers by Number of Repeat Allegations\nby Complainant Ethnicity")
+
+base_data %>%  #count(unique_mos_id, complainant_eth, fill) %>%
+  group_by(complainant_eth) %>% mutate(com_eth_med = median(repeats)) %>% ungroup() %>%
+  
+  ggplot(aes(x = repeats, fill = fill)) +
+  geom_bar() + #geom_vline(aes(xintercept = com_eth_med)) +
+  
+  facet_grid(complainant_eth ~ mos_eth) +
+  
+  ggtitle("Officers by Number of Repeat Allegations\nfor a given Complainant Ethnicity\n") +
+  xlab("\nRepeat Allegations per Officer\n(Officer Ethnicity)") +
+  ylab("Allegations\n(Complainant Ethnicity)\n") +
+  scale_fill_manual("Board Disposition", values = pal_disposition) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_rect(fill = "grey90", color = "white"))
 ```
 
 ![](Visuals_files/figure-html/repeat_complaints_eth-1.png)<!-- -->
 
 ```r
 # thin out axis labels
-base + geom_bar(position = "fill") + ylab(NULL) +
-  facet_wrap(. ~ complainant_eth) + ggtitle("Allegation Outcome by Number of Repeat Allegations\nper Officer and Complainant Ethnicity") +
-  scale_y_continuous(limits=c(0,1), labels = scales::percent)
+#base + geom_bar(position = "fill") + ylab(NULL) +
+#  facet_wrap(. ~ complainant_eth) + ggtitle("Allegation Outcome by Number of Repeat Allegations\nper Officer and Complainant Ethnicity") +
+  #scale_y_continuous(limits=c(0,1), labels = scales::percent)
+
+# complainant ethnicity
+base_data %>% ungroup() %>%
+  count(complainant_eth, fill) %>%
+  group_by(complainant_eth) %>% mutate(total = sum(n)) %>%
+  ungroup() %>% mutate(width = total/sum(total)) %>%
+  filter(!str_detect(complainant_eth, "Indian")) %>%
+  ggplot(aes(x = complainant_eth, y = n, fill = fill, width = width*5)) + geom_col(position = "fill") +
+  geom_label(aes(label = paste0(factor(round(n/total*100, digits = 2)),"%")),
+             position = position_fill(vjust = 0.5), size = 3, show.legend = FALSE) +
+  geom_text(aes(x = complainant_eth, y = 1.05, label = glue::glue("{total} Complaints")),
+            family = "serif", size = 3) +
+  
+  ggtitle("Allegation Outcomes by Complainant Ethnicity\n") +
+  xlab(NULL) + ylab(NULL) +
+  labs(fill = "Board Disposition") +
+  scale_fill_manual("", values = pal_disposition) +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.y = element_blank())
 ```
 
 ![](Visuals_files/figure-html/repeat_complaints_eth-2.png)<!-- -->
@@ -281,7 +353,7 @@ summarize(group_by(filter(a, year_received > 2015), precinct), count = n()) %>% 
 ```
 
 ```
-## # A tibble: 79 x 3
+## # A tibble: 79 × 3
 ##    precinct count total
 ##       <dbl> <int> <int>
 ##  1        1    68  8450
@@ -334,7 +406,7 @@ a %>% filter(year_received > 2015) %>%
 ```
 
 ```
-## # A tibble: 1 x 1
+## # A tibble: 1 × 1
 ##   median
 ##    <dbl>
 ## 1  0.583
