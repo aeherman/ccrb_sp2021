@@ -11,25 +11,25 @@ output:
 
 ## Repeat Offenses
 
-First, let's take a look at the distribution of repeat allegations.
+First, let's take a look at the distribution of repeat complaints.
 
-In the left plot, we can see the total of number of officers with a given number of repeat allegations.  This plot demonstrates a declining pattern and indicates that 50% of officers in the database have fewer than 3 allegations against them.  Some officers have nearly 30 allegations against them.
+In the left plot, we can see the total of number of officers with a given number of repeat complaints.  This plot demonstrates a declining pattern and indicates that 50% of officers in the database have fewer than 3 allegations against them.  Some officers have nearly 30 allegations against them.
 
 In order to be included in the dataset, officers must have at least one substantiated allegation against them. In the plot on the right, which demonstrates the total number of allegations for all officers with a given number of repeat allegations, we can see that, indeed, for officers with only one allegation, it was substantiated.  This data inclusion condition skews the proportion of officers with fewer allegations toward substantiated.
 
 <img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints-1.png" width="672" />
 
-But this dataset goes back until the 1980s and contains data only on current officers, and these data points concern officers who are still on the force and have had more time to collect allegations.  So, we can divide up the officers by "year of entry" (defined as the first registered year of a substantiated allegation) to compare officers who have had similar numbers of years to collect allegations.
+But this dataset contains data only on current officers, some of whom have been around since the 1980s and have had more time to collect allegations.  So, we can divide up the officers by "year of entry" (defined as the first registered year of a substantiated allegation) to compare officers who have had similar numbers of years to collect allegations.  Indeed, in the plot below, we can see that officers who have been around longer have more complaints against them.
 
 <img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_decade_entry-1.png" width="672" />
 
 ## Repeat Offenses by Racial Demographics
 
-The allegations against officers with a given number of repeat allegations vary by the race of the complainant and the race of the officer.  The below plot indicates that the majority of complainants are people of color, and a higher proportion of allegations of white complainants are substantiated.
+The allegations against officers with a given number of repeat complaints vary by the race of the complainant and the race of the officer.  The below plot indicates that the majority of complainants are people of color, and a higher proportion of allegations of white complainants are substantiated.
 
 <img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-2.png" width="672" />
 
-The below plot groups repeat allegations by the identified race of the complainant and the officer. This grouping demonstrates that the distribution of complaints is similar across racial demographics, and that the majority of allegations are Black complainants against White officers.
+The below plot groups repeat complaints by the identified race of the complainant and the officer. This grouping demonstrates that the distribution of complaints is similar across racial demographics, and that the majority of allegations are Black complainants against White officers.
 
 <img src="../src/visualizations/Visuals_files/figure-html/repeat_complaints_eth-1.png" width="672" />
 
@@ -39,13 +39,13 @@ The below plot groups repeat allegations by the identified race of the complaina
 I seek to identify potential disciplinary action in terms of rank changes over time associated with board disposition resolution..  Another way to look at presence of reactions to repeat offenses could be the change in command or precinct.
 -->
 
-First, let's take a look at the rates of substantiated claims over time.  It appears that, as time has passed, there have been an increase in number of substantiated and exonerated claims.  More than anything else, this likely reflects increasing investigation ability and improved data storage.  But, we can see that in the early 2000s, a higher proportion of allegations were exonerated than substantiated, and this differential has lessened in recent years.
+First, let's take a look at the rates of substantiated allegations over time.  It appears that, as time has passed, there have been an increase in number of substantiated and exonerated allegations.  More than anything else, this likely reflects increasing investigation ability and improved data storage.  But, we can see that in the early 2000s, a higher proportion of allegations were exonerated than substantiated, and this differential has lessened in recent years.
 
 <img src="../src/visualizations/Visuals_files/figure-html/complaint_results_time-1.png" width="672" />
 
 <!--How is this impacted by admittance of officers into the dataset.-->
 
-Potentially, officers who had lots of substantiated claims from a few decades ago have been fired, and so are no longer represented in this current dataset.
+Potentially, officers who had lots of substantiated claims from a few decades ago have been fired, and so are no longer represented in this current dataset, so that the actual proportion some decades ago is misrepresentative.
 <!--
 More and more new officers who have had only one substantiated complaint.
 How to control for the missingness of the data.
@@ -53,30 +53,33 @@ We can't conclude anything from overall trends, but these bumps suggest that som
 
 Next, we might be able to see consequences for behavioral misconduct in terms of changes in rank.  We may see that certain conclusions of the civilian complaint review board on a given allegation are associated with an increase or decrease in rank of the officer.
 
-In order to do this, I rated the ranks numerically as visible in the below table.  Also, I isolate a single result of grouped complaints based on the following hierarchy: substanitated, exonerated, unsubstantiated.
+In order to do this, I rated the ranks numerically as visible in the below table (higher value indicates a higher rank).  Additionally, in order to get one board disposition per complaint (and associated rank changes with that single result), I categorize each complaint based off of the most interesting board dispostion according to the following hierarchy:
+1. The board dispostion of complaints with at least one substantied allegation is recorded as "substantiated".
+2. If no allegations are substantiated, but at least one allegation is exonerated, the board disposition is categorized as "exonerated".
+3. All remaining complaints, without substantiated or exonerated allegations, are categorized as "unsubstantiated".
 
 
-| ...1|rank_cat               | rank|
-|----:|:----------------------|----:|
-|    1|police officer         |    1|
-|    2|sergeant               |    2|
-|    3|detective              |    3|
-|    4|lieutenant             |    4|
-|    5|captain                |    5|
-|    6|deputy inspector       |    6|
-|    7|inspector              |    7|
-|    8|chiefs and other ranks |    8|
+|rank_cat               | rank|
+|:----------------------|----:|
+|police officer         |    1|
+|sergeant               |    2|
+|detective              |    3|
+|lieutenant             |    4|
+|captain                |    5|
+|deputy inspector       |    6|
+|inspector              |    7|
+|chiefs and other ranks |    8|
 
 <img src="../src/visualizations/Visuals_files/figure-html/rank_changes_resolution-1.png" width="672" />
 
-Although we can see that most allegations go unsubstantiated, the proportions across these results are relatively equivalent.  Further, the clear majority of officer ranks remain unchanged after a given allegation, such that it is difficult to compare or identify patterns in promotion and demotion rates of officers.  <!--Actually, it seems that there is a pattern concerning promoted officers...-->
+The proportions across the three types of conclusions are relatively equivalent.  Further, the clear majority of officer ranks remain unchanged after a given allegation, such that it is difficult to compare or identify patterns in promotion and demotion rates of officers.  <!--Actually, it seems that there is a pattern concerning promoted officers...-->
 
 
-Next, we can look at the change of officer ranks over time.  First, we can look at the relationship between proportion of officers demoted as more allegations are levied against them.  There are hardly any demotions, and the potential increase in promotions may instead be associated with career length.
+Next, we can look at the change of officer ranks over time.  First, we can look at the relationship between proportion of officers demoted as more allegations are levied against them.  There are hardly any demotions, and the potential increase in promotions may instead be associated with career length, rather than just number of repeat complaints.
 
 <img src="../src/visualizations/Visuals_files/figure-html/rank_changes-1.png" width="672" />
 
-However, it is important to remember that few officers make it to that many allegations. In the next plot, we the shading of the colors indicates the relative proportions of allegations for each x-axis unit.  This demonstrates again that the majority of officers don't a dozen or so allegations.
+However, it is important to remember that few officers in this dataset collect many allegations. In the next plot, the shading of the colors indicates the relative proportions of allegation conclusions for each x-axis unit.  This demonstrates there aren't enough observations of higher numbers of repeat complaints to describe a clear pattern.
 
 <img src="../src/visualizations/Visuals_files/figure-html/rank_changes-2.png" width="672" />
 
